@@ -243,17 +243,19 @@ export function ReimbursementForm() {
       }
 
       // Convert files to base64 and add to payload
-      for (let i = 0; i < attachments.length; i++) {
-        const att = attachments[i]
-        if (att.file) {
+      payload.attachments = await Promise.all(
+        attachments.map(async (att) => {
+          // attachments are validated above, but keep a small runtime guard
+          if (!att.file) return null
           const base64Content = await fileToBase64(att.file)
-          payload[`attachment${i + 1}`] = {
+          return {
             name: att.file.name,
             content: base64Content,
             contentType: att.file.type,
           }
-        }
-      }
+        }),
+      )
+      payload.attachments = payload.attachments.filter(Boolean)
 
       // Send to Power Automate endpoint
       const powerAutomateUrl = process.env.NEXT_PUBLIC_POWER_AUTOMATE_URL
