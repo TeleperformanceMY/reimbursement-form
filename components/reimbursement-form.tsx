@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,9 +24,40 @@ interface ExpenseRow {
   amountSource: string
   fxRate: string
   amountBilling: string
-  amountBillable: string
+  billableToClient: boolean
   expenseType: string
 }
+
+const COMPANY_OPTIONS = ["TPMY", "TPTH", "Majorel"] as const
+
+const DEPARTMENT_OPTIONS = [
+  "Production and Delivery of Service",
+  "Agents",
+  "HR operation - agents",
+  "Subject Matter Experts",
+  "Supervisors",
+  "Dedicated employees other than QA",
+  "Selection and Recruitment",
+  "Real Time Analyst",
+  "Mission Control",
+  "WFM",
+  "Trainers",
+  "Quality Assurance",
+  "TAP (DC)",
+  "Finance",
+  "Payroll",
+  "IT",
+  "Recruiting",
+  "Legal, Compliance and Privacy",
+  "Administration",
+  "Facilities",
+  "Human Resources",
+  "Learning and Development",
+  "Global Mobility Team",
+  "Transformation office",
+] as const
+
+const CURRENCY_OPTIONS = ["MYR", "USD", "EUR", "GBP", "JPY", "CNY", "SGD", "KRW", "IDR", "INR", "THB"] as const
 
 interface AttachmentFile {
   id: string
@@ -43,11 +74,12 @@ export function ReimbursementForm() {
   // Form fields
   const [company, setCompany] = useState("")
   const [employeeName, setEmployeeName] = useState("")
+  const [employeeIdent, setEmployeeIdent] = useState("")
   const [department, setDepartment] = useState("")
-  const [site, setSite] = useState("")
   const [date, setDate] = useState("")
   const [purposeOfTravel, setPurposeOfTravel] = useState("")
-  const [travelPeriod, setTravelPeriod] = useState("")
+  const [travelStartDate, setTravelStartDate] = useState("")
+  const [travelEndDate, setTravelEndDate] = useState("")
   const [noOfDays, setNoOfDays] = useState("")
   const [travelDestination, setTravelDestination] = useState("")
   const [submittedBy, setSubmittedBy] = useState("")
@@ -63,13 +95,30 @@ export function ReimbursementForm() {
       amountSource: "",
       fxRate: "1",
       amountBilling: "",
-      amountBillable: "",
+      billableToClient: false,
       expenseType: "meals",
     },
   ])
 
   // Attachments
   const [attachments, setAttachments] = useState<AttachmentFile[]>([{ id: "1", file: null, error: "" }])
+
+  // Auto-calculate No. of Days from travel start/end dates
+  useEffect(() => {
+    if (travelStartDate && travelEndDate) {
+      const start = new Date(travelStartDate)
+      const end = new Date(travelEndDate)
+      if (end >= start) {
+        const diffTime = end.getTime() - start.getTime()
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+        setNoOfDays(String(Math.max(0, diffDays)))
+      } else {
+        setNoOfDays("")
+      }
+    } else {
+      setNoOfDays("")
+    }
+  }, [travelStartDate, travelEndDate])
 
   const addExpenseRow = () => {
     setExpenses([
@@ -83,7 +132,7 @@ export function ReimbursementForm() {
         amountSource: "",
         fxRate: "1",
         amountBilling: "",
-        amountBillable: "",
+        billableToClient: false,
         expenseType: "meals",
       },
     ])
@@ -95,7 +144,7 @@ export function ReimbursementForm() {
     }
   }
 
-  const updateExpense = (id: string, field: keyof ExpenseRow, value: string) => {
+  const updateExpense = (id: string, field: keyof ExpenseRow, value: string | boolean) => {
     setExpenses(
       expenses.map((exp) => {
         if (exp.id === id) {
@@ -103,8 +152,8 @@ export function ReimbursementForm() {
 
           // Auto-calculate billing amount when source amount or FX rate changes
           if (field === "amountSource" || field === "fxRate") {
-            const source = Number.parseFloat(field === "amountSource" ? value : exp.amountSource) || 0
-            const fx = Number.parseFloat(field === "fxRate" ? value : exp.fxRate) || 1
+            const source = Number.parseFloat(field === "amountSource" ? String(value) : exp.amountSource) || 0
+            const fx = Number.parseFloat(field === "fxRate" ? String(value) : exp.fxRate) || 1
             updated.amountBilling = (source * fx).toFixed(2)
           }
 
@@ -152,10 +201,14 @@ export function ReimbursementForm() {
 
   // Calculate totals
   const calculateTotals = () => {
-    const totals = {
+    const totals: Record<string, number> = {
       meals: 0,
       transportation: 0,
-      other: 0,
+      flight: 0,
+      employeeEngagement: 0,
+      accommodation: 0,
+      clientEntertainmentPotential: 0,
+      clientEntertainmentAssisting: 0,
       total: 0,
     }
 
@@ -165,7 +218,11 @@ export function ReimbursementForm() {
 
       if (exp.expenseType === "meals") totals.meals += amount
       else if (exp.expenseType === "transportation") totals.transportation += amount
-      else if (exp.expenseType === "other") totals.other += amount
+      else if (exp.expenseType === "flight") totals.flight += amount
+      else if (exp.expenseType === "employeeEngagement") totals.employeeEngagement += amount
+      else if (exp.expenseType === "accommodation") totals.accommodation += amount
+      else if (exp.expenseType === "clientEntertainmentPotential") totals.clientEntertainmentPotential += amount
+      else if (exp.expenseType === "clientEntertainmentAssisting") totals.clientEntertainmentAssisting += amount
     })
 
     return totals
@@ -192,7 +249,7 @@ export function ReimbursementForm() {
     e.preventDefault()
 
     // Validation: Required fields
-    if (!company || !employeeName || !department || !site || !date) {
+    if (!company || !employeeName || !employeeIdent || !department || !date) {
       alert(t.requiredFieldsError)
       return
     }
@@ -212,14 +269,15 @@ export function ReimbursementForm() {
       const payload: any = {
         company,
         employeeName,
+        employeeIdent,
         department,
-        site,
         date,
         billableToClient: isBillableToClient ? "yes" : "no",
         clientName: isBillableToClient ? clientName : "",
         purposeOfTravel,
-        travelPeriod,
-        noOfDays,
+        travelStartDate,
+        travelEndDate,
+        noOfDays: noOfDays ? Number(noOfDays) : 0,
         travelDestination,
         expenses: expenses.map((exp) => ({
           date: exp.date,
@@ -228,14 +286,18 @@ export function ReimbursementForm() {
           currency: exp.currency,
           amountSource: Number.parseFloat(exp.amountSource) || 0,
           fxRate: Number.parseFloat(exp.fxRate) || 1,
-          amountBilling: Number.parseFloat(exp.amountBilling) || 0,
-          amountBillable: Number.parseFloat(exp.amountBillable) || 0,
+          amountMYR: Number.parseFloat(exp.amountBilling) || 0,
+          billableToClient: exp.billableToClient,
           expenseType: exp.expenseType,
         })),
         totals: {
           meals: totals.meals,
           transportation: totals.transportation,
-          other: totals.other,
+          flight: totals.flight,
+          employeeEngagement: totals.employeeEngagement,
+          accommodation: totals.accommodation,
+          clientEntertainmentPotential: totals.clientEntertainmentPotential,
+          clientEntertainmentAssisting: totals.clientEntertainmentAssisting,
           total: totals.total,
         },
         submittedBy,
@@ -280,13 +342,14 @@ export function ReimbursementForm() {
       // Reset form
       setCompany("")
       setEmployeeName("")
+      setEmployeeIdent("")
       setDepartment("")
-      setSite("")
       setDate("")
       setIsBillableToClient(false)
       setClientName("")
       setPurposeOfTravel("")
-      setTravelPeriod("")
+      setTravelStartDate("")
+      setTravelEndDate("")
       setNoOfDays("")
       setTravelDestination("")
       setSubmittedBy("")
@@ -300,7 +363,7 @@ export function ReimbursementForm() {
           amountSource: "",
           fxRate: "1",
           amountBilling: "",
-          amountBillable: "",
+          billableToClient: false,
           expenseType: "meals",
         },
       ])
@@ -349,23 +412,28 @@ export function ReimbursementForm() {
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Basic Information */}
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-300 pb-2">{t.basicInfo}</h2>
+              <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-300 pb-2 mb-4">{t.basicInfo}</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="company" className="text-gray-700">
                     {t.company} *
                   </Label>
-                  <Input
-                    id="company"
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                    required
-                    className="border-gray-300"
-                  />
+                  <Select value={company} onValueChange={setCompany} required>
+                    <SelectTrigger className="border-gray-300">
+                      <SelectValue placeholder={t.company} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COMPANY_OPTIONS.map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="employeeName" className="text-gray-700">
                     {t.employeeName} *
                   </Label>
@@ -378,33 +446,38 @@ export function ReimbursementForm() {
                   />
                 </div>
 
-                <div>
+                <div className="space-y-2">
+                  <Label htmlFor="employeeIdent" className="text-gray-700">
+                    {t.employeeIdent} *
+                  </Label>
+                  <Input
+                    id="employeeIdent"
+                    value={employeeIdent}
+                    onChange={(e) => setEmployeeIdent(e.target.value)}
+                    required
+                    className="border-gray-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="department" className="text-gray-700">
                     {t.department} *
                   </Label>
-                  <Input
-                    id="department"
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    required
-                    className="border-gray-300"
-                  />
+                  <Select value={department} onValueChange={setDepartment} required>
+                    <SelectTrigger className="border-gray-300">
+                      <SelectValue placeholder={t.department} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DEPARTMENT_OPTIONS.map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="site" className="text-gray-700">
-                    {t.site} *
-                  </Label>
-                  <Input
-                    id="site"
-                    value={site}
-                    onChange={(e) => setSite(e.target.value)}
-                    required
-                    className="border-gray-300"
-                  />
-                </div>
-
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="date" className="text-gray-700">
                     {t.date} *
                   </Label>
@@ -443,12 +516,12 @@ export function ReimbursementForm() {
 
             {/* Travel Information */}
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-300 pb-2">
+              <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-300 pb-2 mb-4">
                 {t.travelReimbursement}
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="purposeOfTravel" className="text-gray-700">
                     {t.purposeOfTravel}
                   </Label>
@@ -460,20 +533,33 @@ export function ReimbursementForm() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="travelPeriod" className="text-gray-700">
-                    {t.travelPeriod}
+                <div className="space-y-2">
+                  <Label htmlFor="travelStartDate" className="text-gray-700">
+                    {t.travelStartDate}
                   </Label>
                   <Input
-                    id="travelPeriod"
-                    placeholder="e.g., 2024-01-01 to 2024-01-05"
-                    value={travelPeriod}
-                    onChange={(e) => setTravelPeriod(e.target.value)}
+                    id="travelStartDate"
+                    type="date"
+                    value={travelStartDate}
+                    onChange={(e) => setTravelStartDate(e.target.value)}
                     className="border-gray-300"
                   />
                 </div>
 
-                <div>
+                <div className="space-y-2">
+                  <Label htmlFor="travelEndDate" className="text-gray-700">
+                    {t.travelEndDate}
+                  </Label>
+                  <Input
+                    id="travelEndDate"
+                    type="date"
+                    value={travelEndDate}
+                    onChange={(e) => setTravelEndDate(e.target.value)}
+                    className="border-gray-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="noOfDays" className="text-gray-700">
                     {t.noOfDays}
                   </Label>
@@ -482,12 +568,12 @@ export function ReimbursementForm() {
                     type="number"
                     min="0"
                     value={noOfDays}
-                    onChange={(e) => setNoOfDays(e.target.value)}
-                    className="border-gray-300"
+                    readOnly
+                    className="border-gray-300 bg-neutral-50"
                   />
                 </div>
 
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="travelDestination" className="text-gray-700">
                     {t.travelDestination}
                   </Label>
@@ -507,7 +593,7 @@ export function ReimbursementForm() {
 
             {/* Expenses Breakdown */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-300 pb-2">
                   {t.expensesBreakdown}
                 </h2>
@@ -529,18 +615,31 @@ export function ReimbursementForm() {
                 </Tooltip>
               </div>
 
+              <p className="text-sm text-gray-600 bg-gray-100 p-3 rounded border-l-4 border-gray-400">
+                {t.fxRateNote}
+                <a
+                  href="https://www.bnm.gov.my/exchange-rates"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  https://www.bnm.gov.my/exchange-rates
+                </a>
+                {" (Bank Negara Malaysia)"}
+              </p>
+
               <div className="overflow-x-auto">
-                <div className="min-w-[1000px]">
+                <div className="min-w-[1100px]">
                   {/* Header */}
-                  <div className="grid grid-cols-[80px_150px_100px_80px_120px_100px_120px_120px_120px_50px] gap-2 mb-2 text-sm font-semibold text-gray-700 bg-gray-100 p-2 rounded">
+                  <div className="grid grid-cols-[80px_150px_100px_90px_100px_90px_100px_100px_140px_50px] gap-2 mb-2 text-sm font-semibold text-gray-700 bg-gray-100 p-2 rounded">
                     <div>{t.date}</div>
                     <div>{t.particulars}</div>
                     <div>{t.refNo}</div>
                     <div>{t.currency}</div>
                     <div>{t.amountSource}</div>
                     <div>{t.fxRate}</div>
-                    <div>{t.amountBilling}</div>
-                    <div>{t.amountBillable}</div>
+                    <div>{t.amountMYR}</div>
+                    <div className="flex items-center justify-center">{t.amountBillable}</div>
                     <div>{t.expenseType}</div>
                     <div></div>
                   </div>
@@ -549,7 +648,7 @@ export function ReimbursementForm() {
                   {expenses.map((expense) => (
                     <div
                       key={expense.id}
-                      className="grid grid-cols-[80px_150px_100px_80px_120px_100px_120px_120px_120px_50px] gap-2 mb-2 items-center"
+                      className="grid grid-cols-[80px_150px_100px_90px_100px_90px_100px_100px_140px_50px] gap-2 mb-2 items-center"
                     >
                       <Input
                         type="date"
@@ -577,13 +676,11 @@ export function ReimbursementForm() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="MYR">MYR</SelectItem>
-                          <SelectItem value="USD">USD</SelectItem>
-                          <SelectItem value="EUR">EUR</SelectItem>
-                          <SelectItem value="GBP">GBP</SelectItem>
-                          <SelectItem value="JPY">JPY</SelectItem>
-                          <SelectItem value="CNY">CNY</SelectItem>
-                          <SelectItem value="SGD">SGD</SelectItem>
+                          {CURRENCY_OPTIONS.map((opt) => (
+                            <SelectItem key={opt} value={opt}>
+                              {opt}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <Input
@@ -609,14 +706,14 @@ export function ReimbursementForm() {
                         readOnly
                         className="border-gray-300 bg-neutral-50 text-sm"
                       />
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={expense.amountBillable}
-                        onChange={(e) => updateExpense(expense.id, "amountBillable", e.target.value)}
-                        placeholder="0.00"
-                        className="border-gray-300 text-sm"
-                      />
+                      <div className="flex items-center justify-center">
+                        <Checkbox
+                          checked={expense.billableToClient}
+                          onCheckedChange={(checked) =>
+                            updateExpense(expense.id, "billableToClient", checked === true)
+                          }
+                        />
+                      </div>
                       <Select
                         value={expense.expenseType}
                         onValueChange={(value) => updateExpense(expense.id, "expenseType", value)}
@@ -627,7 +724,11 @@ export function ReimbursementForm() {
                         <SelectContent>
                           <SelectItem value="meals">{t.meals}</SelectItem>
                           <SelectItem value="transportation">{t.transportation}</SelectItem>
-                          <SelectItem value="other">{t.other}</SelectItem>
+                          <SelectItem value="flight">{t.flight}</SelectItem>
+                          <SelectItem value="employeeEngagement">{t.employeeEngagement}</SelectItem>
+                          <SelectItem value="accommodation">{t.accommodation}</SelectItem>
+                          <SelectItem value="clientEntertainmentPotential">{t.clientEntertainmentPotential}</SelectItem>
+                          <SelectItem value="clientEntertainmentAssisting">{t.clientEntertainmentAssisting}</SelectItem>
                         </SelectContent>
                       </Select>
                       <Button
@@ -645,18 +746,51 @@ export function ReimbursementForm() {
                 </div>
               </div>
 
-              {/* Totals */}
+              {/* Totals - only show expense types that have been selected (non-zero) */}
               <div className="bg-gray-100 p-4 rounded-lg border border-gray-300 space-y-2">
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="text-gray-700">{t.totalMeals}:</div>
-                  <div className="font-semibold text-right">${totals.meals.toFixed(2)}</div>
-
-                  <div className="text-gray-700">{t.totalTransportation}:</div>
-                  <div className="font-semibold text-right">${totals.transportation.toFixed(2)}</div>
-
-                  <div className="text-gray-700">{t.totalOther}:</div>
-                  <div className="font-semibold text-right">${totals.other.toFixed(2)}</div>
-
+                  {totals.meals > 0 && (
+                    <>
+                      <div className="text-gray-700">{t.totalMeals}:</div>
+                      <div className="font-semibold text-right">${totals.meals.toFixed(2)}</div>
+                    </>
+                  )}
+                  {totals.transportation > 0 && (
+                    <>
+                      <div className="text-gray-700">{t.totalTransportation}:</div>
+                      <div className="font-semibold text-right">${totals.transportation.toFixed(2)}</div>
+                    </>
+                  )}
+                  {totals.flight > 0 && (
+                    <>
+                      <div className="text-gray-700">{t.totalFlight}:</div>
+                      <div className="font-semibold text-right">${totals.flight.toFixed(2)}</div>
+                    </>
+                  )}
+                  {totals.employeeEngagement > 0 && (
+                    <>
+                      <div className="text-gray-700">{t.totalEmployeeEngagement}:</div>
+                      <div className="font-semibold text-right">${totals.employeeEngagement.toFixed(2)}</div>
+                    </>
+                  )}
+                  {totals.accommodation > 0 && (
+                    <>
+                      <div className="text-gray-700">{t.totalAccommodation}:</div>
+                      <div className="font-semibold text-right">${totals.accommodation.toFixed(2)}</div>
+                    </>
+                  )}
+                  {totals.clientEntertainmentPotential > 0 && (
+                    <>
+                      <div className="text-gray-700">{t.totalClientEntertainmentPotential}:</div>
+                      <div className="font-semibold text-right">${totals.clientEntertainmentPotential.toFixed(2)}</div>
+                    </>
+                  )}
+                  {totals.clientEntertainmentAssisting > 0 && (
+                    <>
+                      <div className="text-gray-700">{t.totalClientEntertainmentAssisting}:</div>
+                      <div className="font-semibold text-right">${totals.clientEntertainmentAssisting.toFixed(2)}</div>
+                    </>
+                  )}
                   <div className="text-lg font-bold text-gray-900 border-t border-gray-300 pt-2">{t.grandTotal}:</div>
                   <div className="text-lg font-bold text-right text-gray-900 border-t border-gray-300 pt-2">
                     ${totals.total.toFixed(2)}
@@ -667,7 +801,7 @@ export function ReimbursementForm() {
 
             {/* Attachments */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-300 pb-2">
                   {t.attachments}
                 </h2>
@@ -696,11 +830,11 @@ export function ReimbursementForm() {
 
               {attachments.map((attachment, index) => (
                 <div key={attachment.id} className="flex items-start gap-3">
-                  <div className="flex-1">
+                  <div className="flex-1 space-y-2">
                     <Label htmlFor={`attachment-${attachment.id}`} className="text-gray-700">
                       {t.attachment} {index + 1}
                     </Label>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2">
                       <Input
                         id={`attachment-${attachment.id}`}
                         type="file"
@@ -733,8 +867,8 @@ export function ReimbursementForm() {
 
             {/* Submitted By */}
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-300 pb-2">{t.submittedBy}</h2>
-              <div>
+              <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-300 pb-2 mb-4">{t.submittedBy}</h2>
+              <div className="space-y-2">
                 <Label htmlFor="submittedBy" className="text-gray-700">
                   {t.employeeNameSignature} *
                 </Label>
