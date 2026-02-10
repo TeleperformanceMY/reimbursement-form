@@ -31,6 +31,10 @@ interface ExpenseRow {
 const COMPANY_OPTIONS = ["TPMY", "TPTH", "Majorel"] as const
 
 const DEPARTMENT_OPTIONS = [
+  "CEO",
+  "COO",
+  "Finance Director",
+  "TRA director",
   "Production and Delivery of Service",
   "Agents",
   "HR operation - agents",
@@ -631,7 +635,8 @@ export function ReimbursementForm() {
               <div className="overflow-x-auto">
                 <div className="min-w-[1100px]">
                   {/* Header */}
-                  <div className="grid grid-cols-[80px_150px_100px_90px_100px_90px_100px_100px_140px_50px] gap-2 mb-2 text-sm font-semibold text-gray-700 bg-gray-100 p-2 rounded">
+                  <div className="grid grid-cols-[44px_80px_150px_100px_90px_100px_90px_100px_100px_minmax(180px,1fr)] gap-2 mb-2 text-sm font-semibold text-gray-700 bg-gray-100 p-2 rounded">
+                    <div></div>
                     <div>{t.date}</div>
                     <div>{t.particulars}</div>
                     <div>{t.refNo}</div>
@@ -641,15 +646,27 @@ export function ReimbursementForm() {
                     <div>{t.amountMYR}</div>
                     <div className="flex items-center justify-center">{t.amountBillable}</div>
                     <div>{t.expenseType}</div>
-                    <div></div>
                   </div>
 
                   {/* Expense Rows */}
                   {expenses.map((expense) => (
                     <div
                       key={expense.id}
-                      className="grid grid-cols-[80px_150px_100px_90px_100px_90px_100px_100px_140px_50px] gap-2 mb-2 items-center"
+                      className="grid grid-cols-[44px_80px_150px_100px_90px_100px_90px_100px_100px_minmax(180px,1fr)] gap-2 mb-2 items-center"
                     >
+                      <div className="flex items-center justify-center">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeExpenseRow(expense.id)}
+                          disabled={expenses.length === 1}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 shrink-0"
+                          title={expenses.length === 1 ? "" : "Remove row"}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
                       <Input
                         type="date"
                         value={expense.date}
@@ -731,16 +748,6 @@ export function ReimbursementForm() {
                           <SelectItem value="clientEntertainmentAssisting">{t.clientEntertainmentAssisting}</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeExpenseRow(expense.id)}
-                        disabled={expenses.length === 1}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
                     </div>
                   ))}
                 </div>
