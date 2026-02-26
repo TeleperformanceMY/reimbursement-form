@@ -28,13 +28,10 @@ interface ExpenseRow {
   expenseType: string
 }
 
-const COMPANY_OPTIONS = ["TPMY", "TPTH", "Majorel"] as const
+const COMPANY_OPTIONS = ["TPMY", "TPTH", "Majorel TH"] as const
 
 const DEPARTMENT_OPTIONS = [
-  "CEO",
-  "COO",
-  "Finance Director",
-  "TRA director",
+
   "Production and Delivery of Service",
   "Agents",
   "HR operation - agents",
@@ -58,7 +55,11 @@ const DEPARTMENT_OPTIONS = [
   "Human Resources",
   "Learning and Development",
   "Global Mobility Team",
-  "Transformation office",
+  "Transformation office",  
+  "CEO",
+  "COO",
+  "Finance Director",
+  "TRA director"
 ] as const
 
 const CURRENCY_OPTIONS = ["MYR", "USD", "EUR", "GBP", "JPY", "CNY", "SGD", "KRW", "IDR", "INR", "THB"] as const
@@ -212,7 +213,9 @@ export function ReimbursementForm() {
       employeeEngagement: 0,
       accommodation: 0,
       clientEntertainmentPotential: 0,
-      clientEntertainmentAssisting: 0,
+      clientEntertainmentExisting: 0,
+      mileage: 0,
+      petrol: 0,
       total: 0,
     }
 
@@ -226,7 +229,9 @@ export function ReimbursementForm() {
       else if (exp.expenseType === "employeeEngagement") totals.employeeEngagement += amount
       else if (exp.expenseType === "accommodation") totals.accommodation += amount
       else if (exp.expenseType === "clientEntertainmentPotential") totals.clientEntertainmentPotential += amount
-      else if (exp.expenseType === "clientEntertainmentAssisting") totals.clientEntertainmentAssisting += amount
+      else if (exp.expenseType === "clientEntertainmentExisting") totals.clientEntertainmentExisting += amount
+      else if (exp.expenseType === "mileage") totals.mileage += amount
+      else if (exp.expenseType === "petrol") totals.petrol += amount
     })
 
     return totals
@@ -301,7 +306,9 @@ export function ReimbursementForm() {
           employeeEngagement: totals.employeeEngagement,
           accommodation: totals.accommodation,
           clientEntertainmentPotential: totals.clientEntertainmentPotential,
-          clientEntertainmentAssisting: totals.clientEntertainmentAssisting,
+          clientEntertainmentExisting: totals.clientEntertainmentExisting,
+          mileage: totals.mileage,
+          petrol: totals.petrol,
           total: totals.total,
         },
         submittedBy,
@@ -745,7 +752,9 @@ export function ReimbursementForm() {
                           <SelectItem value="employeeEngagement">{t.employeeEngagement}</SelectItem>
                           <SelectItem value="accommodation">{t.accommodation}</SelectItem>
                           <SelectItem value="clientEntertainmentPotential">{t.clientEntertainmentPotential}</SelectItem>
-                          <SelectItem value="clientEntertainmentAssisting">{t.clientEntertainmentAssisting}</SelectItem>
+                          <SelectItem value="clientEntertainmentExisting">{t.clientEntertainmentExisting}</SelectItem>
+                          <SelectItem value="mileage">{t.mileage}</SelectItem>
+                          <SelectItem value="petrol">{t.petrol}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -792,10 +801,22 @@ export function ReimbursementForm() {
                       <div className="font-semibold text-right">${totals.clientEntertainmentPotential.toFixed(2)}</div>
                     </>
                   )}
-                  {totals.clientEntertainmentAssisting > 0 && (
+                  {totals.clientEntertainmentExisting > 0 && (
                     <>
-                      <div className="text-gray-700">{t.totalClientEntertainmentAssisting}:</div>
-                      <div className="font-semibold text-right">${totals.clientEntertainmentAssisting.toFixed(2)}</div>
+                      <div className="text-gray-700">{t.totalClientEntertainmentExisting}:</div>
+                      <div className="font-semibold text-right">${totals.clientEntertainmentExisting.toFixed(2)}</div>
+                    </>
+                  )}
+                  {totals.mileage > 0 && (
+                    <>
+                      <div className="text-gray-700">{t.totalMileage}:</div>
+                      <div className="font-semibold text-right">${totals.mileage.toFixed(2)}</div>
+                    </>
+                  )}
+                  {totals.petrol > 0 && (
+                    <>
+                      <div className="text-gray-700">{t.totalPetrol}:</div>
+                      <div className="font-semibold text-right">${totals.petrol.toFixed(2)}</div>
                     </>
                   )}
                   <div className="text-lg font-bold text-gray-900 border-t border-gray-300 pt-2">{t.grandTotal}:</div>
@@ -830,6 +851,10 @@ export function ReimbursementForm() {
                   </TooltipContent>
                 </Tooltip>
               </div>
+
+              <p className="text-sm text-gray-600 bg-gray-100 p-3 rounded border-l-4 border-gray-400">
+                {t.attachmentRenameNote}
+              </p>
 
               <p className="text-sm text-gray-600 bg-gray-100 p-3 rounded border-l-4 border-gray-400">
                 {t.attachmentNote}

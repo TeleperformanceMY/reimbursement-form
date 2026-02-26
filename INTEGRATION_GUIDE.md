@@ -47,7 +47,7 @@ The form sends a POST request with `Content-Type: application/json` containing:
       "fxRate": number,
       "amountBilling": number,
       "amountBillable": number,
-      "expenseType": "meals" | "transportation" | "other"
+      "expenseType": "meals" | "transportation" | "flight" | "employeeEngagement" | "accommodation" | "clientEntertainmentPotential" | "clientEntertainmentExisting" | "mileage" | "petrol" | "other"
     }
   ]
 }
@@ -59,6 +59,13 @@ The form sends a POST request with `Content-Type: application/json` containing:
   "totals": {
     "meals": number,
     "transportation": number,
+    "flight": number,
+    "employeeEngagement": number,
+    "accommodation": number,
+    "clientEntertainmentPotential": number,
+    "clientEntertainmentExisting": number,
+    "mileage": number,
+    "petrol": number,
     "other": number,
     "total": number
   }
@@ -78,6 +85,8 @@ Files are converted to base64 and sent as:
   "...": "dynamic based on number of attachments"
 }
 ```
+
+Note: Please rename uploaded attachments to match the Ref No in the Expenses Breakdown (for example `INV-001_receipt.pdf`) so they are easy to match with expense rows in Power Automate.
 
 ### Submission
 ```json
