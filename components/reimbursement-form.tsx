@@ -57,9 +57,7 @@ const DEPARTMENT_OPTIONS = [
   "Global Mobility Team",
   "Transformation office",  
   "CEO",
-  "COO",
-  "Finance Director",
-  "TRA director"
+  "COO"
 ] as const
 
 const CURRENCY_OPTIONS = ["MYR", "USD", "EUR", "GBP", "JPY", "CNY", "SGD", "KRW", "IDR", "INR", "THB"] as const
