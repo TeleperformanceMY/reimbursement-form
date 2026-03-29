@@ -79,7 +79,6 @@ export function ReimbursementForm() {
   const [employeeName, setEmployeeName] = useState("")
   const [employeeIdent, setEmployeeIdent] = useState("")
   const [department, setDepartment] = useState("")
-  const [date, setDate] = useState("")
   const [purposeOfTravel, setPurposeOfTravel] = useState("")
   const [travelStartDate, setTravelStartDate] = useState("")
   const [travelEndDate, setTravelEndDate] = useState("")
@@ -261,7 +260,7 @@ export function ReimbursementForm() {
     e.preventDefault()
 
     // Validation: Required fields
-    if (!company || !employeeName || !employeeIdent || !department || !date) {
+    if (!company || !employeeName || !employeeIdent || !department) {
       alert(t.requiredFieldsError)
       return
     }
@@ -283,7 +282,7 @@ export function ReimbursementForm() {
         employeeName,
         employeeIdent,
         department,
-        date,
+        date: new Date().toISOString(),
         billableToClient: isBillableToClient ? "yes" : "no",
         clientName: isBillableToClient ? clientName : "",
         purposeOfTravel,
@@ -358,7 +357,6 @@ export function ReimbursementForm() {
       setEmployeeName("")
       setEmployeeIdent("")
       setDepartment("")
-      setDate("")
       setIsBillableToClient(false)
       setClientName("")
       setPurposeOfTravel("")
@@ -491,19 +489,7 @@ export function ReimbursementForm() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="date" className="text-gray-700">
-                    {t.date} *
-                  </Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    required
-                    className="border-gray-300"
-                  />
-                </div>
+
               </div>
 
               <div className="flex items-start space-x-3 pt-2">
