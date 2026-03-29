@@ -189,8 +189,13 @@ export function ReimbursementForm() {
             return { ...att, file: null, error }
           }
 
-          // Validation: Only PDF format
-          if (file && file.type !== "application/pdf") {
+          // Validation: Only PDF or Excel formats
+          const allowedTypes = [
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+            "application/vnd.ms-excel" // .xls
+          ]
+          if (file && !allowedTypes.includes(file.type)) {
             error = t.fileTypeError
             return { ...att, file: null, error }
           }
@@ -868,7 +873,7 @@ export function ReimbursementForm() {
                       <Input
                         id={`attachment-${attachment.id}`}
                         type="file"
-                        accept=".pdf"
+                        accept=".pdf,.xlsx,.xls"
                         onChange={(e) => {
                           const file = e.target.files?.[0] || null
                           handleFileChange(attachment.id, file)
