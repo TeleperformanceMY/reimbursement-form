@@ -28,7 +28,7 @@ interface ExpenseRow {
   expenseType: string
 }
 
-const COMPANY_OPTIONS = ["TPMY", "TPTH", "Majorel TH"] as const
+const COMPANY_OPTIONS = ["TPMY", "TPTH", "MJTH"] as const
 
 const DEPARTMENT_OPTIONS = [
 
