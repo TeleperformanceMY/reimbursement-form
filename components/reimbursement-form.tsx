@@ -152,6 +152,14 @@ export function ReimbursementForm() {
         if (exp.id === id) {
           const updated = { ...exp, [field]: value }
 
+          // If currency is MYR or THB, set FX rate to 1
+          if (field === "currency") {
+            const newCurrency = String(value)
+            if (newCurrency === "MYR" || newCurrency === "THB") {
+              updated.fxRate = "1"
+            }
+          }
+
           // Auto-calculate billing amount when source amount or FX rate changes
           if (field === "amountSource" || field === "fxRate") {
             const source = Number.parseFloat(field === "amountSource" ? String(value) : exp.amountSource) || 0
@@ -710,7 +718,10 @@ export function ReimbursementForm() {
                         value={expense.fxRate}
                         onChange={(e) => updateExpense(expense.id, "fxRate", e.target.value)}
                         placeholder="1.0000"
-                        className="border-gray-300 text-sm"
+                        readOnly={expense.currency === "MYR" || expense.currency === "THB"}
+                        className={`border-gray-300 text-sm ${
+                          expense.currency === "MYR" || expense.currency === "THB" ? "bg-neutral-50" : ""
+                        }`}
                       />
                       <Input
                         type="number"
@@ -757,60 +768,60 @@ export function ReimbursementForm() {
                   {totals.meals > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalMeals}:</div>
-                      <div className="font-semibold text-right">${totals.meals.toFixed(2)}</div>
+                      <div className="font-semibold text-right">RM{totals.meals.toFixed(2)}</div>
                     </>
                   )}
                   {totals.transportation > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalTransportation}:</div>
-                      <div className="font-semibold text-right">${totals.transportation.toFixed(2)}</div>
+                      <div className="font-semibold text-right">RM{totals.transportation.toFixed(2)}</div>
                     </>
                   )}
                   {totals.flight > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalFlight}:</div>
-                      <div className="font-semibold text-right">${totals.flight.toFixed(2)}</div>
+                      <div className="font-semibold text-right">RM{totals.flight.toFixed(2)}</div>
                     </>
                   )}
                   {totals.employeeEngagement > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalEmployeeEngagement}:</div>
-                      <div className="font-semibold text-right">${totals.employeeEngagement.toFixed(2)}</div>
+                      <div className="font-semibold text-right">RM{totals.employeeEngagement.toFixed(2)}</div>
                     </>
                   )}
                   {totals.accommodation > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalAccommodation}:</div>
-                      <div className="font-semibold text-right">${totals.accommodation.toFixed(2)}</div>
+                      <div className="font-semibold text-right">RM{totals.accommodation.toFixed(2)}</div>
                     </>
                   )}
                   {totals.clientEntertainmentPotential > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalClientEntertainmentPotential}:</div>
-                      <div className="font-semibold text-right">${totals.clientEntertainmentPotential.toFixed(2)}</div>
+                      <div className="font-semibold text-right">RM{totals.clientEntertainmentPotential.toFixed(2)}</div>
                     </>
                   )}
                   {totals.clientEntertainmentExisting > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalClientEntertainmentExisting}:</div>
-                      <div className="font-semibold text-right">${totals.clientEntertainmentExisting.toFixed(2)}</div>
+                      <div className="font-semibold text-right">RM{totals.clientEntertainmentExisting.toFixed(2)}</div>
                     </>
                   )}
                   {totals.mileage > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalMileage}:</div>
-                      <div className="font-semibold text-right">${totals.mileage.toFixed(2)}</div>
+                      <div className="font-semibold text-right">RM{totals.mileage.toFixed(2)}</div>
                     </>
                   )}
                   {totals.petrol > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalPetrol}:</div>
-                      <div className="font-semibold text-right">${totals.petrol.toFixed(2)}</div>
+                      <div className="font-semibold text-right">RM{totals.petrol.toFixed(2)}</div>
                     </>
                   )}
                   <div className="text-lg font-bold text-gray-900 border-t border-gray-300 pt-2">{t.grandTotal}:</div>
                   <div className="text-lg font-bold text-right text-gray-900 border-t border-gray-300 pt-2">
-                    ${totals.total.toFixed(2)}
+                    RM{totals.total.toFixed(2)}
                   </div>
                 </div>
               </div>
