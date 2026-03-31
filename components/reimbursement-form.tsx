@@ -130,7 +130,7 @@ export function ReimbursementForm() {
         date: "",
         particulars: "",
         refNo: "",
-        currency: "MYR",
+        currency: company === "TPTH" ? "THB" : "MYR",
         amountSource: "",
         fxRate: "1",
         amountBilling: "",
@@ -152,10 +152,11 @@ export function ReimbursementForm() {
         if (exp.id === id) {
           const updated = { ...exp, [field]: value }
 
-          // If currency is MYR or THB, set FX rate to 1
+          // Lock FX rate at 1 for company's default currency
           if (field === "currency") {
             const newCurrency = String(value)
-            if (newCurrency === "MYR" || newCurrency === "THB") {
+            const defaultCurrency = company === "TPTH" ? "THB" : "MYR"
+            if (newCurrency === defaultCurrency) {
               updated.fxRate = "1"
             }
           }
@@ -647,7 +648,7 @@ export function ReimbursementForm() {
                     <div>{t.currency}</div>
                     <div>{t.amountSource}</div>
                     <div>{t.fxRate}</div>
-                    <div>{t.amountMYR}</div>
+                    <div>{company === "TPTH" ? "Amount THB" : "Amount MYR"}</div>
                     <div className="flex items-center justify-center">{t.amountBillable}</div>
                     <div>{t.expenseType}</div>
                   </div>
@@ -718,9 +719,9 @@ export function ReimbursementForm() {
                         value={expense.fxRate}
                         onChange={(e) => updateExpense(expense.id, "fxRate", e.target.value)}
                         placeholder="1.0000"
-                        readOnly={expense.currency === "MYR" || expense.currency === "THB"}
+                        readOnly={expense.currency === (company === "TPTH" ? "THB" : "MYR")}
                         className={`border-gray-300 text-sm ${
-                          expense.currency === "MYR" || expense.currency === "THB" ? "bg-neutral-50" : ""
+                          expense.currency === (company === "TPTH" ? "THB" : "MYR") ? "bg-neutral-50" : ""
                         }`}
                       />
                       <Input
@@ -768,60 +769,60 @@ export function ReimbursementForm() {
                   {totals.meals > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalMeals}:</div>
-                      <div className="font-semibold text-right">RM{totals.meals.toFixed(2)}</div>
+                      <div className="font-semibold text-right">{company === "TPTH" ? "฿" : "RM"}{totals.meals.toFixed(2)}</div>
                     </>
                   )}
                   {totals.transportation > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalTransportation}:</div>
-                      <div className="font-semibold text-right">RM{totals.transportation.toFixed(2)}</div>
+                      <div className="font-semibold text-right">{company === "TPTH" ? "฿" : "RM"}{totals.transportation.toFixed(2)}</div>
                     </>
                   )}
                   {totals.flight > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalFlight}:</div>
-                      <div className="font-semibold text-right">RM{totals.flight.toFixed(2)}</div>
+                      <div className="font-semibold text-right">{company === "TPTH" ? "฿" : "RM"}{totals.flight.toFixed(2)}</div>
                     </>
                   )}
                   {totals.employeeEngagement > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalEmployeeEngagement}:</div>
-                      <div className="font-semibold text-right">RM{totals.employeeEngagement.toFixed(2)}</div>
+                      <div className="font-semibold text-right">{company === "TPTH" ? "฿" : "RM"}{totals.employeeEngagement.toFixed(2)}</div>
                     </>
                   )}
                   {totals.accommodation > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalAccommodation}:</div>
-                      <div className="font-semibold text-right">RM{totals.accommodation.toFixed(2)}</div>
+                      <div className="font-semibold text-right">{company === "TPTH" ? "฿" : "RM"}{totals.accommodation.toFixed(2)}</div>
                     </>
                   )}
                   {totals.clientEntertainmentPotential > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalClientEntertainmentPotential}:</div>
-                      <div className="font-semibold text-right">RM{totals.clientEntertainmentPotential.toFixed(2)}</div>
+                      <div className="font-semibold text-right">{company === "TPTH" ? "฿" : "RM"}{totals.clientEntertainmentPotential.toFixed(2)}</div>
                     </>
                   )}
                   {totals.clientEntertainmentExisting > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalClientEntertainmentExisting}:</div>
-                      <div className="font-semibold text-right">RM{totals.clientEntertainmentExisting.toFixed(2)}</div>
+                      <div className="font-semibold text-right">{company === "TPTH" ? "฿" : "RM"}{totals.clientEntertainmentExisting.toFixed(2)}</div>
                     </>
                   )}
                   {totals.mileage > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalMileage}:</div>
-                      <div className="font-semibold text-right">RM{totals.mileage.toFixed(2)}</div>
+                      <div className="font-semibold text-right">{company === "TPTH" ? "฿" : "RM"}{totals.mileage.toFixed(2)}</div>
                     </>
                   )}
                   {totals.petrol > 0 && (
                     <>
                       <div className="text-gray-700">{t.totalPetrol}:</div>
-                      <div className="font-semibold text-right">RM{totals.petrol.toFixed(2)}</div>
+                      <div className="font-semibold text-right">{company === "TPTH" ? "฿" : "RM"}{totals.petrol.toFixed(2)}</div>
                     </>
                   )}
                   <div className="text-lg font-bold text-gray-900 border-t border-gray-300 pt-2">{t.grandTotal}:</div>
                   <div className="text-lg font-bold text-right text-gray-900 border-t border-gray-300 pt-2">
-                    RM{totals.total.toFixed(2)}
+                    {company === "TPTH" ? "฿" : "RM"}{totals.total.toFixed(2)}
                   </div>
                 </div>
               </div>
